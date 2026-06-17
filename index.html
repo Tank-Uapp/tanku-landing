@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TankU — Know your water</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --sky-top: #EAF4FB;
+    --sky-bottom: #BFE0F0;
+    --glass: rgba(255,255,255,0.55);
+    --glass-border: rgba(255,255,255,0.8);
+    --deep: #2D5F7C;
+    --deep-dark: #234C66;
+    --ink: #1A2B36;
+    --ink-soft: #4A6072;
+    --good: #6FA84F;
+    --alert: #C0594A;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+    background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 55%, var(--sky-bottom) 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, .display {
+    font-family: 'Sora', sans-serif;
+  }
+
+  /* ambient water caustic effect */
+  .caustic {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+    background:
+      radial-gradient(ellipse 600px 300px at 20% 10%, rgba(255,255,255,0.4), transparent 60%),
+      radial-gradient(ellipse 500px 400px at 80% 30%, rgba(255,255,255,0.25), transparent 60%);
+  }
+
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 32px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* NAV */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 0;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--deep-dark);
+    letter-spacing: -0.02em;
+  }
+
+  .logo-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(160deg, var(--deep) 0%, #4C8AAD 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(45,95,124,0.35);
+  }
+
+  .nav-cta {
+    background: var(--deep);
+    color: white;
+    border: none;
+    padding: 11px 22px;
+    border-radius: 100px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14.5px;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    box-shadow: 0 4px 16px rgba(45,95,124,0.3);
+  }
+  .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(45,95,124,0.4); }
+  .nav-cta:focus-visible { outline: 2px solid var(--deep-dark); outline-offset: 3px; }
+
+  /* HERO */
+  .hero {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    align-items: center;
+    gap: 40px;
+    padding: 56px 0 90px;
+    min-height: 70vh;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--deep-dark);
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    padding: 7px 14px;
+    border-radius: 100px;
+    margin-bottom: 22px;
+    backdrop-filter: blur(8px);
+  }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good); }
+
+  .hero h1 {
+    font-size: 52px;
+    line-height: 1.08;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--deep-dark);
+    max-width: 560px;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--deep);
+    position: relative;
+  }
+
+  .hero p {
+    margin-top: 22px;
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 460px;
+  }
+
+  .hero-actions {
+    margin-top: 34px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: var(--deep);
+    color: white;
+    border: none;
+    padding: 16px 30px;
+    border-radius: 100px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(45,95,124,0.35);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(45,95,124,0.45); }
+  .btn-primary:focus-visible { outline: 2px solid var(--deep-dark); outline-offset: 3px; }
+
+  .btn-ghost {
+    color: var(--deep-dark);
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-ghost svg { transition: transform 0.18s ease; }
+  .btn-ghost:hover svg { transform: translateY(2px); }
+  .btn-ghost:focus-visible { outline: 2px solid var(--deep-dark); outline-offset: 3px; }
+
+  .hero-note {
+    margin-top: 28px;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* PHONE MOCK */
+  .phone-stage {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 1200px;
+  }
+
+  .phone {
+    width: 280px;
+    border-radius: 32px;
+    background: #0d1620;
+    padding: 3px;
+    box-shadow:
+      0 30px 60px -10px rgba(20,50,70,0.45),
+      0 10px 20px -8px rgba(20,50,70,0.3);
+    transform: rotate(4deg);
+    transition: transform 0.6s ease;
+  }
+  .phone:hover { transform: rotate(1deg) translateY(-4px); }
+
+  .phone-screen {
+    border-radius: 29px;
+    overflow: hidden;
+    position: relative;
+    display: block;
+  }
+  .phone-screen img {
+    width: 100%;
+    display: block;
+  }
+
+  .floating-chip {
+    position: absolute;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 12px 16px;
+    box-shadow: 0 12px 30px rgba(20,50,70,0.18);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--deep-dark);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: float 5s ease-in-out infinite;
+  }
+  .chip-1 { top: 8%; right: -8%; animation-delay: 0s; }
+  .chip-2 { bottom: 12%; left: -10%; animation-delay: 1.2s; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .floating-chip { animation: none; }
+    html { scroll-behavior: auto; }
+    .phone { transition: none; }
+  }
+
+  /* SCREENS SECTION */
+  .section-label {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--deep);
+    margin-bottom: 14px;
+  }
+
+  .section-heading {
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--deep-dark);
+    letter-spacing: -0.01em;
+    max-width: 600px;
+    margin-bottom: 60px;
+  }
+
+  .showcase {
+    padding: 60px 0 40px;
+  }
+
+  .showcase-row {
+    display: grid;
+    grid-template-columns: 0.85fr 1.15fr;
+    gap: 60px;
+    align-items: center;
+    margin-bottom: 110px;
+  }
+  .showcase-row.reverse {
+    grid-template-columns: 1.15fr 0.85fr;
+  }
+  .showcase-row.reverse .showcase-art { order: 2; }
+  .showcase-row.reverse .showcase-copy { order: 1; }
+
+  .showcase-art {
+    display: flex;
+    justify-content: center;
+  }
+
+  .showcase-art .phone {
+    width: 230px;
+    transform: rotate(-3deg);
+  }
+  .showcase-row.reverse .showcase-art .phone {
+    transform: rotate(3deg);
+  }
+
+  .showcase-copy .num {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--deep);
+    margin-bottom: 12px;
+    letter-spacing: 0.04em;
+  }
+
+  .showcase-copy h3 {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--deep-dark);
+    margin-bottom: 14px;
+    letter-spacing: -0.01em;
+  }
+
+  .showcase-copy p {
+    font-size: 16.5px;
+    line-height: 1.65;
+    color: var(--ink-soft);
+    max-width: 420px;
+  }
+
+  /* TRENDS CALLOUT - signature element */
+  .trend-callout {
+    margin-top: 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(8px);
+    border-radius: 14px;
+    padding: 10px 16px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--deep-dark);
+  }
+  .trend-callout .swatch { width: 24px; height: 3px; background: var(--deep); border-radius: 2px; }
+  .trend-callout .swatch.health { background: var(--good); }
+
+  /* CLOSING CTA */
+  .closing {
+    padding: 80px 0 70px;
+    text-align: center;
+  }
+
+  .closing-card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+    border-radius: 28px;
+    padding: 64px 40px;
+    box-shadow: 0 20px 50px rgba(20,50,70,0.12);
+  }
+
+  .closing h2 {
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--deep-dark);
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+
+  .closing p {
+    font-size: 17px;
+    color: var(--ink-soft);
+    max-width: 440px;
+    margin: 0 auto 32px;
+    line-height: 1.6;
+  }
+
+  footer {
+    padding: 40px 0 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  footer a { color: var(--deep-dark); text-decoration: none; font-weight: 600; }
+
+  /* RESPONSIVE */
+  @media (max-width: 880px) {
+    .hero { grid-template-columns: 1fr; gap: 50px; padding-top: 30px; text-align: center; }
+    .hero h1 { font-size: 38px; max-width: 100%; }
+    .hero p { margin-left: auto; margin-right: auto; }
+    .hero-actions { justify-content: center; }
+    .hero-note { justify-content: center; }
+    .phone { width: 230px; }
+    .chip-1, .chip-2 { display: none; }
+
+    .showcase-row, .showcase-row.reverse {
+      grid-template-columns: 1fr;
+      gap: 36px;
+      text-align: center;
+    }
+    .showcase-row.reverse .showcase-art,
+    .showcase-row.reverse .showcase-copy { order: initial; }
+    .showcase-copy p { margin-left: auto; margin-right: auto; }
+    .section-heading { font-size: 28px; text-align: center; margin-left: auto; margin-right: auto; }
+
+    .closing-card { padding: 48px 24px; }
+    .closing h2 { font-size: 28px; }
+  }
+
+  @media (max-width: 480px) {
+    .wrap { padding: 0 20px; }
+    .hero h1 { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="caustic"></div>
+
+<div class="wrap">
+  <nav>
+    <div class="logo">
+      <span class="logo-mark">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M3 12C3 12 6 6 12 6C18 6 21 12 21 12C21 12 18 18 12 18C6 18 3 12 3 12Z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
+          <circle cx="12" cy="12" r="2.2" fill="white"/>
+        </svg>
+      </span>
+      TankU
+    </div>
+    <button class="nav-cta" onclick="window.open('https://kevin-apps12.github.io/TankU/', '_blank')">Launch app</button>
+  </nav>
+
+  <section class="hero">
+    <div>
+      <div class="eyebrow"><span class="dot"></span> Free · works in any browser</div>
+      <h1>Know your water<br>before it knows<br><em>you're</em> in trouble.</h1>
+      <p>Log readings, track trends, and ask an AI advisor that's grounded in your actual tank data — for reef, freshwater, or pond.</p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="window.open('https://kevin-apps12.github.io/TankU/', '_blank')">
+          Launch TankU
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <a href="#screens" class="btn-ghost">
+          See it in action
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M12 19L6 13M12 19L18 13" stroke="#2D5F7C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+      <div class="hero-note">No install needed — add it to your home screen in one tap.</div>
+    </div>
+
+    <div class="phone-stage">
+      <div class="floating-chip chip-1">📈 Alkalinity trending up</div>
+      <div class="floating-chip chip-2">✨ Ask the AI advisor</div>
+      <div class="phone">
+        <div class="phone-screen">
+          <img src="images/screen-trends.png" alt="TankU trends chart showing alkalinity and tank health over three months">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="showcase" id="screens">
+    <div class="section-label">Inside the app</div>
+    <h2 class="section-heading">Three taps from "I wonder how my tank's doing" to an actual answer.</h2>
+
+    <div class="showcase-row">
+      <div class="showcase-art">
+        <div class="phone">
+          <div class="phone-screen">
+            <img src="images/screen-log.png" alt="TankU log screen for recording an alkalinity reading">
+          </div>
+        </div>
+      </div>
+      <div class="showcase-copy">
+        <div class="num">01 — Log a reading</div>
+        <h3>Record a reading in seconds</h3>
+        <p>Pick a parameter, type the number, done. TankU shows you the target reef range right next to the field, so you know if you're in trouble before you even save.</p>
+      </div>
+    </div>
+
+    <div class="showcase-row reverse">
+      <div class="showcase-art">
+        <div class="phone">
+          <div class="phone-screen">
+            <img src="images/screen-health.png" alt="TankU health check screen with a tank health rating slider">
+          </div>
+        </div>
+      </div>
+      <div class="showcase-copy">
+        <div class="num">02 — Rate how it looks</div>
+        <h3>Not everything shows up on a test strip</h3>
+        <p>Some problems you just notice — a little algae, a coral that's not opening. Log a quick health score alongside your readings, and TankU connects the dots later.</p>
+      </div>
+    </div>
+
+    <div class="showcase-row">
+      <div class="showcase-art">
+        <div class="phone">
+          <div class="phone-screen">
+            <img src="images/screen-trends.png" alt="TankU trends chart comparing alkalinity readings to tank health over time">
+          </div>
+        </div>
+      </div>
+      <div class="showcase-copy">
+        <div class="num">03 — Watch the trend, not just the number</div>
+        <h3>See the story behind the swings</h3>
+        <p>One reading is a data point. A graph is a warning system. TankU lines your parameters up against your health scores so you can see what's actually moving the needle.</p>
+        <div class="trend-callout"><span class="swatch"></span> Alkalinity <span class="swatch health"></span> Health</div>
+      </div>
+    </div>
+
+    <div class="showcase-row reverse">
+      <div class="showcase-art">
+        <div class="phone">
+          <div class="phone-screen">
+            <img src="images/screen-ai.png" alt="TankU AI advisor giving recommendations based on tank parameters">
+          </div>
+        </div>
+      </div>
+      <div class="showcase-copy">
+        <div class="num">04 — Ask the advisor</div>
+        <h3>An AI that's actually seen your tank</h3>
+        <p>Ask whether a new fish is a good fit, what to dose next, or why your numbers keep drifting. The advisor answers from your real history — not a generic care sheet.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="closing">
+    <div class="closing-card">
+      <h2>Your tank's already telling you something.</h2>
+      <p>TankU just helps you actually hear it. Free to use, runs right in your browser, and you're tracking your first reading in under a minute.</p>
+      <button class="btn-primary" onclick="window.open('https://kevin-apps12.github.io/TankU/', '_blank')">
+        Launch TankU
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <footer>
+    <div>TankU — built for people who actually watch their water.</div>
+    <a href="https://kevin-apps12.github.io/TankU/">kevin-apps12.github.io/TankU →</a>
+  </footer>
+</div>
+
+</body>
+</html>
